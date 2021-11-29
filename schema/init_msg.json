@@ -1,0 +1,262 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "InitMsg",
+  "description": "Instantiation message",
+  "type": "object",
+  "required": [
+    "callback",
+    "entropy",
+    "name",
+    "sscrt_address",
+    "symbol"
+  ],
+  "properties": {
+    "admin": {
+      "description": "optional admin address, env.message.sender if missing",
+      "anyOf": [
+        {
+          "$ref": "#/definitions/HumanAddr"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "callback": {
+      "description": "Stores callback hash",
+      "type": "string"
+    },
+    "config": {
+      "description": "optional privacy configuration for the contract",
+      "anyOf": [
+        {
+          "$ref": "#/definitions/InitConfig"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "entropy": {
+      "description": "entropy used for prng seed",
+      "type": "string"
+    },
+    "mint_funds_distribution_info": {
+      "description": "The list of addreses to divide up on initial mint",
+      "anyOf": [
+        {
+          "$ref": "#/definitions/RoyaltyInfo"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "name": {
+      "description": "name of token contract",
+      "type": "string"
+    },
+    "post_init_callback": {
+      "description": "optional callback message to execute after instantiation.  This will most often be used to have the token contract provide its address to a contract that instantiated it, but it could be used to execute any contract",
+      "anyOf": [
+        {
+          "$ref": "#/definitions/PostInitCallback"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "royalty_info": {
+      "description": "optional royalty information to use as default when RoyaltyInfo is not provided to a minting function",
+      "anyOf": [
+        {
+          "$ref": "#/definitions/RoyaltyInfo"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "sscrt_address": {
+      "description": "Stores sscrt address",
+      "allOf": [
+        {
+          "$ref": "#/definitions/HumanAddr"
+        }
+      ]
+    },
+    "symbol": {
+      "description": "token contract symbol",
+      "type": "string"
+    }
+  },
+  "definitions": {
+    "Binary": {
+      "description": "Binary is a wrapper around Vec<u8> to add base64 de/serialization with serde. It also adds some helper methods to help encode inline.\n\nThis is only needed as serde-json-{core,wasm} has a horrible encoding for Vec<u8>",
+      "type": "string"
+    },
+    "Coin": {
+      "type": "object",
+      "required": [
+        "amount",
+        "denom"
+      ],
+      "properties": {
+        "amount": {
+          "$ref": "#/definitions/Uint128"
+        },
+        "denom": {
+          "type": "string"
+        }
+      }
+    },
+    "HumanAddr": {
+      "type": "string"
+    },
+    "InitConfig": {
+      "description": "This type represents optional configuration values. All values are optional and have defaults which are more private by default, but can be overridden if necessary",
+      "type": "object",
+      "properties": {
+        "enable_burn": {
+          "description": "Indicates whether burn functionality should be enabled default: False",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "enable_sealed_metadata": {
+          "description": "indicates whether sealed metadata should be enabled.  If sealed metadata is enabled, the private metadata is not viewable by anyone, not even the owner, until the owner calls the Reveal function.  When Reveal is called, the sealed metadata is irreversibly moved to the public metadata (as default).  if unwrapped_metadata_is_private is set to true, it will remain as private metadata, but the owner will now be able to see it.  Anyone will be able to query the token to know that it has been unwrapped.  This simulates buying/selling a wrapped card that no one knows which card it is until it is unwrapped. If sealed metadata is not enabled, all tokens are considered unwrapped default:  False",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "minter_may_update_metadata": {
+          "description": "indicates whether a minter is permitted to update a token's metadata default: True",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "owner_may_update_metadata": {
+          "description": "indicates whether the owner of a token is permitted to update a token's metadata default: False",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "public_owner": {
+          "description": "indicates whether token ownership is public or private.  A user can still change whether the ownership of their tokens is public or private default: False",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "public_token_supply": {
+          "description": "indicates whether the token IDs and the number of tokens controlled by the contract are public.  If the token supply is private, only minters can view the token IDs and number of tokens controlled by the contract default: False",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "unwrapped_metadata_is_private": {
+          "description": "indicates if the Reveal function should keep the sealed metadata private after unwrapping This config value is ignored if sealed metadata is not enabled default: False",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        }
+      }
+    },
+    "PostInitCallback": {
+      "description": "info needed to perform a callback message after instantiation",
+      "type": "object",
+      "required": [
+        "code_hash",
+        "contract_address",
+        "msg",
+        "send"
+      ],
+      "properties": {
+        "code_hash": {
+          "description": "code hash of the contract to execute",
+          "type": "string"
+        },
+        "contract_address": {
+          "description": "address of the contract to execute",
+          "allOf": [
+            {
+              "$ref": "#/definitions/HumanAddr"
+            }
+          ]
+        },
+        "msg": {
+          "description": "the callback message to execute",
+          "allOf": [
+            {
+              "$ref": "#/definitions/Binary"
+            }
+          ]
+        },
+        "send": {
+          "description": "list of native Coin to send with the callback message",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Coin"
+          }
+        }
+      }
+    },
+    "Royalty": {
+      "description": "data for a single royalty",
+      "type": "object",
+      "required": [
+        "rate",
+        "recipient"
+      ],
+      "properties": {
+        "rate": {
+          "description": "royalty rate",
+          "type": "integer",
+          "format": "uint16",
+          "minimum": 0.0
+        },
+        "recipient": {
+          "description": "address to send royalties to",
+          "allOf": [
+            {
+              "$ref": "#/definitions/HumanAddr"
+            }
+          ]
+        }
+      }
+    },
+    "RoyaltyInfo": {
+      "description": "all royalty information",
+      "type": "object",
+      "required": [
+        "decimal_places_in_rates",
+        "royalties"
+      ],
+      "properties": {
+        "decimal_places_in_rates": {
+          "description": "decimal places in royalty rates",
+          "type": "integer",
+          "format": "uint8",
+          "minimum": 0.0
+        },
+        "royalties": {
+          "description": "list of royalties",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Royalty"
+          }
+        }
+      }
+    },
+    "Uint128": {
+      "type": "string"
+    }
+  }
+}

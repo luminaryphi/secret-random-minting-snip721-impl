@@ -1,0 +1,1535 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "HandleMsg",
+  "anyOf": [
+    {
+      "description": "Sets private metadata to public",
+      "type": "object",
+      "required": [
+        "to_pub"
+      ],
+      "properties": {
+        "to_pub": {
+          "type": "object",
+          "required": [
+            "token_id"
+          ],
+          "properties": {
+            "token_id": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "description": "Receive Snip20 Payment",
+      "type": "object",
+      "required": [
+        "receive"
+      ],
+      "properties": {
+        "receive": {
+          "type": "object",
+          "required": [
+            "amount",
+            "from",
+            "sender"
+          ],
+          "properties": {
+            "amount": {
+              "$ref": "#/definitions/Uint128"
+            },
+            "from": {
+              "$ref": "#/definitions/HumanAddr"
+            },
+            "msg": {
+              "default": null,
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/Binary"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "sender": {
+              "$ref": "#/definitions/HumanAddr"
+            }
+          }
+        }
+      }
+    },
+    {
+      "description": "Preloads metadata for random mints",
+      "type": "object",
+      "required": [
+        "pre_load"
+      ],
+      "properties": {
+        "pre_load": {
+          "type": "object",
+          "required": [
+            "new_data"
+          ],
+          "properties": {
+            "new_data": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/PreLoad"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "description": "set the public and/or private metadata.  This can be called by either the token owner or a valid minter if they have been given this power by the appropriate config values",
+      "type": "object",
+      "required": [
+        "set_metadata"
+      ],
+      "properties": {
+        "set_metadata": {
+          "type": "object",
+          "required": [
+            "token_id"
+          ],
+          "properties": {
+            "padding": {
+              "description": "optional message length padding",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "private_metadata": {
+              "description": "the optional new private metadata",
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/Metadata"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "public_metadata": {
+              "description": "the optional new public metadata",
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/Metadata"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "token_id": {
+              "description": "id of the token whose metadata should be updated",
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "description": "set royalty information.  If no token ID is provided, this royalty info will become the default RoyaltyInfo for any new tokens minted on the contract.  If a token ID is provided, this can only be called by the token creator and only when the creator is the current owner",
+      "type": "object",
+      "required": [
+        "set_royalty_info"
+      ],
+      "properties": {
+        "set_royalty_info": {
+          "type": "object",
+          "properties": {
+            "padding": {
+              "description": "optional message length padding",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "royalty_info": {
+              "description": "the new royalty information.  If None, existing royalty information will be deleted.  It should be noted, that if deleting a token's royalty information while the contract has a default royalty info set up will give the token the default royalty information",
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/RoyaltyInfo"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "token_id": {
+              "description": "optional id of the token whose royalty information should be updated.  If not provided, this updates the default royalty information for any new tokens minted on the contract",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "description": "Reveal the private metadata of a sealed token and mark the token as having been unwrapped",
+      "type": "object",
+      "required": [
+        "reveal"
+      ],
+      "properties": {
+        "reveal": {
+          "type": "object",
+          "required": [
+            "token_id"
+          ],
+          "properties": {
+            "padding": {
+              "description": "optional message length padding",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "token_id": {
+              "description": "id of the token to unwrap",
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "description": "if a contract was instantiated to make ownership public by default, this will allow an address to make the ownership of their tokens private.  The address can still use SetGlobalApproval to make ownership public either inventory-wide or for a specific token",
+      "type": "object",
+      "required": [
+        "make_ownership_private"
+      ],
+      "properties": {
+        "make_ownership_private": {
+          "type": "object",
+          "properties": {
+            "padding": {
+              "description": "optional message length padding",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "description": "add/remove approval(s) that whitelist everyone (makes public)",
+      "type": "object",
+      "required": [
+        "set_global_approval"
+      ],
+      "properties": {
+        "set_global_approval": {
+          "type": "object",
+          "properties": {
+            "expires": {
+              "description": "optional expiration",
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/Expiration"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "padding": {
+              "description": "optional message length padding",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "token_id": {
+              "description": "optional token id to apply approval/revocation to",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "view_owner": {
+              "description": "optional permission level for viewing the owner",
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/AccessLevel"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "view_private_metadata": {
+              "description": "optional permission level for viewing private metadata",
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/AccessLevel"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "description": "add/remove approval(s) for a specific address on the token(s) you own.  Any permissions that are omitted will keep the current permission setting for that whitelist address",
+      "type": "object",
+      "required": [
+        "set_whitelisted_approval"
+      ],
+      "properties": {
+        "set_whitelisted_approval": {
+          "type": "object",
+          "required": [
+            "address"
+          ],
+          "properties": {
+            "address": {
+              "description": "address being granted/revoked permission",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/HumanAddr"
+                }
+              ]
+            },
+            "expires": {
+              "description": "optional expiration",
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/Expiration"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "padding": {
+              "description": "optional message length padding",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "token_id": {
+              "description": "optional token id to apply approval/revocation to",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "transfer": {
+              "description": "optional permission level for transferring",
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/AccessLevel"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "view_owner": {
+              "description": "optional permission level for viewing the owner",
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/AccessLevel"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "view_private_metadata": {
+              "description": "optional permission level for viewing private metadata",
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/AccessLevel"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "description": "gives the spender permission to transfer the specified token.  If you are the owner of the token, you can use SetWhitelistedApproval to accomplish the same thing.  If you are an operator, you can only use Approve",
+      "type": "object",
+      "required": [
+        "approve"
+      ],
+      "properties": {
+        "approve": {
+          "type": "object",
+          "required": [
+            "spender",
+            "token_id"
+          ],
+          "properties": {
+            "expires": {
+              "description": "optional expiration for this approval",
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/Expiration"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "padding": {
+              "description": "optional message length padding",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "spender": {
+              "description": "address being granted the permission",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/HumanAddr"
+                }
+              ]
+            },
+            "token_id": {
+              "description": "id of the token that the spender can transfer",
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "description": "revokes the spender's permission to transfer the specified token.  If you are the owner of the token, you can use SetWhitelistedApproval to accomplish the same thing.  If you are an operator, you can only use Revoke, but you can not revoke the transfer approval of another operator",
+      "type": "object",
+      "required": [
+        "revoke"
+      ],
+      "properties": {
+        "revoke": {
+          "type": "object",
+          "required": [
+            "spender",
+            "token_id"
+          ],
+          "properties": {
+            "padding": {
+              "description": "optional message length padding",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "spender": {
+              "description": "address whose permission is revoked",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/HumanAddr"
+                }
+              ]
+            },
+            "token_id": {
+              "description": "id of the token that the spender can no longer transfer",
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "description": "provided for cw721 compliance, but can be done with SetWhitelistedApproval... gives the operator permission to transfer all of the message sender's tokens",
+      "type": "object",
+      "required": [
+        "approve_all"
+      ],
+      "properties": {
+        "approve_all": {
+          "type": "object",
+          "required": [
+            "operator"
+          ],
+          "properties": {
+            "expires": {
+              "description": "optional expiration for this approval",
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/Expiration"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "operator": {
+              "description": "address being granted permission to transfer",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/HumanAddr"
+                }
+              ]
+            },
+            "padding": {
+              "description": "optional message length padding",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "description": "provided for cw721 compliance, but can be done with SetWhitelistedApproval... revokes the operator's permission to transfer any of the message sender's tokens",
+      "type": "object",
+      "required": [
+        "revoke_all"
+      ],
+      "properties": {
+        "revoke_all": {
+          "type": "object",
+          "required": [
+            "operator"
+          ],
+          "properties": {
+            "operator": {
+              "description": "address whose permissions are revoked",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/HumanAddr"
+                }
+              ]
+            },
+            "padding": {
+              "description": "optional message length padding",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "description": "transfer a token",
+      "type": "object",
+      "required": [
+        "transfer_nft"
+      ],
+      "properties": {
+        "transfer_nft": {
+          "type": "object",
+          "required": [
+            "recipient",
+            "token_id"
+          ],
+          "properties": {
+            "memo": {
+              "description": "optional memo for the tx",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "padding": {
+              "description": "optional message length padding",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "recipient": {
+              "description": "recipient of the transfer",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/HumanAddr"
+                }
+              ]
+            },
+            "token_id": {
+              "description": "id of the token to transfer",
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "description": "transfer many tokens",
+      "type": "object",
+      "required": [
+        "batch_transfer_nft"
+      ],
+      "properties": {
+        "batch_transfer_nft": {
+          "type": "object",
+          "required": [
+            "transfers"
+          ],
+          "properties": {
+            "padding": {
+              "description": "optional message length padding",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "transfers": {
+              "description": "list of transfers to perform",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Transfer"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "description": "send a token and call receiving contract's (Batch)ReceiveNft",
+      "type": "object",
+      "required": [
+        "send_nft"
+      ],
+      "properties": {
+        "send_nft": {
+          "type": "object",
+          "required": [
+            "contract",
+            "token_id"
+          ],
+          "properties": {
+            "contract": {
+              "description": "address to send the token to",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/HumanAddr"
+                }
+              ]
+            },
+            "memo": {
+              "description": "optional memo for the tx",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "msg": {
+              "description": "optional message to send with the (Batch)RecieveNft callback",
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/Binary"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "padding": {
+              "description": "optional message length padding",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "receiver_info": {
+              "description": "optional code hash and BatchReceiveNft implementation status of the recipient contract",
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/ReceiverInfo"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "token_id": {
+              "description": "id of the token to send",
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "description": "send many tokens and call receiving contracts' (Batch)ReceiveNft",
+      "type": "object",
+      "required": [
+        "batch_send_nft"
+      ],
+      "properties": {
+        "batch_send_nft": {
+          "type": "object",
+          "required": [
+            "sends"
+          ],
+          "properties": {
+            "padding": {
+              "description": "optional message length padding",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "sends": {
+              "description": "list of sends to perform",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Send"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "description": "burn a token",
+      "type": "object",
+      "required": [
+        "burn_nft"
+      ],
+      "properties": {
+        "burn_nft": {
+          "type": "object",
+          "required": [
+            "token_id"
+          ],
+          "properties": {
+            "memo": {
+              "description": "optional memo for the tx",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "padding": {
+              "description": "optional message length padding",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "token_id": {
+              "description": "token to burn",
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "description": "burn many tokens",
+      "type": "object",
+      "required": [
+        "batch_burn_nft"
+      ],
+      "properties": {
+        "batch_burn_nft": {
+          "type": "object",
+          "required": [
+            "burns"
+          ],
+          "properties": {
+            "burns": {
+              "description": "list of burns to perform",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Burn"
+              }
+            },
+            "padding": {
+              "description": "optional message length padding",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "description": "register that the message sending contract implements ReceiveNft and possibly BatchReceiveNft.  If a contract implements BatchReceiveNft, SendNft will always call BatchReceiveNft even if there is only one token transferred (the token_ids Vec will only contain one ID)",
+      "type": "object",
+      "required": [
+        "register_receive_nft"
+      ],
+      "properties": {
+        "register_receive_nft": {
+          "type": "object",
+          "required": [
+            "code_hash"
+          ],
+          "properties": {
+            "also_implements_batch_receive_nft": {
+              "description": "optionally true if the contract also implements BatchReceiveNft.  Defaults to false if not specified",
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "code_hash": {
+              "description": "receving contract's code hash",
+              "type": "string"
+            },
+            "padding": {
+              "description": "optional message length padding",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "description": "create a viewing key",
+      "type": "object",
+      "required": [
+        "create_viewing_key"
+      ],
+      "properties": {
+        "create_viewing_key": {
+          "type": "object",
+          "required": [
+            "entropy"
+          ],
+          "properties": {
+            "entropy": {
+              "description": "entropy String used in random key generation",
+              "type": "string"
+            },
+            "padding": {
+              "description": "optional message length padding",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "description": "set viewing key",
+      "type": "object",
+      "required": [
+        "set_viewing_key"
+      ],
+      "properties": {
+        "set_viewing_key": {
+          "type": "object",
+          "required": [
+            "key"
+          ],
+          "properties": {
+            "key": {
+              "description": "desired viewing key",
+              "type": "string"
+            },
+            "padding": {
+              "description": "optional message length padding",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "description": "add addresses with minting authority",
+      "type": "object",
+      "required": [
+        "add_minters"
+      ],
+      "properties": {
+        "add_minters": {
+          "type": "object",
+          "required": [
+            "minters"
+          ],
+          "properties": {
+            "minters": {
+              "description": "list of addresses that can now mint",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/HumanAddr"
+              }
+            },
+            "padding": {
+              "description": "optional message length padding",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "description": "revoke minting authority from addresses",
+      "type": "object",
+      "required": [
+        "remove_minters"
+      ],
+      "properties": {
+        "remove_minters": {
+          "type": "object",
+          "required": [
+            "minters"
+          ],
+          "properties": {
+            "minters": {
+              "description": "list of addresses no longer allowed to mint",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/HumanAddr"
+              }
+            },
+            "padding": {
+              "description": "optional message length padding",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "description": "define list of addresses with minting authority",
+      "type": "object",
+      "required": [
+        "set_minters"
+      ],
+      "properties": {
+        "set_minters": {
+          "type": "object",
+          "required": [
+            "minters"
+          ],
+          "properties": {
+            "minters": {
+              "description": "list of addresses with minting authority",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/HumanAddr"
+              }
+            },
+            "padding": {
+              "description": "optional message length padding",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "description": "change address with administrative power",
+      "type": "object",
+      "required": [
+        "change_admin"
+      ],
+      "properties": {
+        "change_admin": {
+          "type": "object",
+          "required": [
+            "address"
+          ],
+          "properties": {
+            "address": {
+              "description": "address with admin authority",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/HumanAddr"
+                }
+              ]
+            },
+            "padding": {
+              "description": "optional message length padding",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "description": "set contract status level to determine which functions are allowed.  StopTransactions status prevent mints, burns, sends, and transfers, but allows all other functions",
+      "type": "object",
+      "required": [
+        "set_contract_status"
+      ],
+      "properties": {
+        "set_contract_status": {
+          "type": "object",
+          "required": [
+            "level"
+          ],
+          "properties": {
+            "level": {
+              "description": "status level",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/ContractStatus"
+                }
+              ]
+            },
+            "padding": {
+              "description": "optional message length padding",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "description": "disallow the use of a permit",
+      "type": "object",
+      "required": [
+        "revoke_permit"
+      ],
+      "properties": {
+        "revoke_permit": {
+          "type": "object",
+          "required": [
+            "permit_name"
+          ],
+          "properties": {
+            "padding": {
+              "description": "optional message length padding",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "permit_name": {
+              "description": "name of the permit that is no longer valid",
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "definitions": {
+    "AccessLevel": {
+      "description": "permission access level",
+      "type": "string",
+      "enum": [
+        "approve_token",
+        "all",
+        "revoke_token",
+        "none"
+      ]
+    },
+    "Authentication": {
+      "description": "media file authentication",
+      "type": "object",
+      "properties": {
+        "key": {
+          "description": "either a decryption key for encrypted files or a password for basic authentication",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "user": {
+          "description": "username used in basic authentication",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "Binary": {
+      "description": "Binary is a wrapper around Vec<u8> to add base64 de/serialization with serde. It also adds some helper methods to help encode inline.\n\nThis is only needed as serde-json-{core,wasm} has a horrible encoding for Vec<u8>",
+      "type": "string"
+    },
+    "Burn": {
+      "description": "token burn info used when doing a BatchBurnNft",
+      "type": "object",
+      "required": [
+        "token_ids"
+      ],
+      "properties": {
+        "memo": {
+          "description": "optional memo for the tx",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "token_ids": {
+          "description": "tokens being burnt",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "ContractStatus": {
+      "type": "string",
+      "enum": [
+        "normal",
+        "stop_transactions",
+        "stop_all"
+      ]
+    },
+    "Expiration": {
+      "description": "at the given point in time and after, Expiration will be considered expired",
+      "anyOf": [
+        {
+          "type": "string",
+          "enum": [
+            "never"
+          ]
+        },
+        {
+          "description": "expires at this block height",
+          "type": "object",
+          "required": [
+            "at_height"
+          ],
+          "properties": {
+            "at_height": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            }
+          }
+        },
+        {
+          "description": "expires at the time in seconds since 01/01/1970",
+          "type": "object",
+          "required": [
+            "at_time"
+          ],
+          "properties": {
+            "at_time": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            }
+          }
+        }
+      ]
+    },
+    "Extension": {
+      "description": "metadata extension You can add any metadata fields you need here.  These fields are based on https://docs.opensea.io/docs/metadata-standards and are the metadata fields that Stashh uses for robust NFT display.  Urls should be prefixed with `http://`, `https://`, `ipfs://`, or `ar://`",
+      "type": "object",
+      "properties": {
+        "animation_url": {
+          "description": "url to a multimedia attachment",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "attributes": {
+          "description": "item attributes",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/definitions/Trait"
+          }
+        },
+        "background_color": {
+          "description": "background color represented as a six-character hexadecimal without a pre-pended #",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "description": {
+          "description": "item description",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "external_url": {
+          "description": "url to allow users to view the item on your site",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "image": {
+          "description": "url to the image",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "image_data": {
+          "description": "raw SVG image data (not recommended). Only use this if you're not including the image parameter",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "media": {
+          "description": "media files as specified on Stashh that allows for basic authenticatiion and decryption keys. Most of the above is used for bridging public eth NFT metadata easily, whereas `media` will be used when minting NFTs on Stashh",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/definitions/MediaFile"
+          }
+        },
+        "name": {
+          "description": "name of the item",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "protected_attributes": {
+          "description": "a select list of trait_types that are in the private metadata.  This will only ever be used in public metadata",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          }
+        },
+        "youtube_url": {
+          "description": "url to a YouTube video",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "HumanAddr": {
+      "type": "string"
+    },
+    "MediaFile": {
+      "description": "media file",
+      "type": "object",
+      "required": [
+        "url"
+      ],
+      "properties": {
+        "authentication": {
+          "description": "authentication information",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Authentication"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "extension": {
+          "description": "file extension",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "file_type": {
+          "description": "file type Stashh currently uses: \"image\", \"video\", \"audio\", \"text\", \"font\", \"application\"",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "url": {
+          "description": "url to the file.  Urls should be prefixed with `http://`, `https://`, `ipfs://`, or `ar://`",
+          "type": "string"
+        }
+      }
+    },
+    "Metadata": {
+      "description": "token metadata",
+      "type": "object",
+      "properties": {
+        "extension": {
+          "description": "optional on-chain metadata.  Only use this if you are not using `token_uri`",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Extension"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "token_uri": {
+          "description": "optional uri for off-chain metadata.  This should be prefixed with `http://`, `https://`, `ipfs://`, or `ar://`.  Only use this if you are not using `extension`",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "PreLoad": {
+      "description": "Preloaded data storage for the tokens during init",
+      "type": "object",
+      "required": [
+        "id",
+        "img_url",
+        "priv_img_url"
+      ],
+      "properties": {
+        "attributes": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/definitions/Trait"
+          }
+        },
+        "id": {
+          "type": "string"
+        },
+        "img_url": {
+          "type": "string"
+        },
+        "priv_attributes": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/definitions/Trait"
+          }
+        },
+        "priv_img_url": {
+          "type": "string"
+        }
+      }
+    },
+    "ReceiverInfo": {
+      "description": "a recipient contract's code hash and whether it implements BatchReceiveNft",
+      "type": "object",
+      "required": [
+        "recipient_code_hash"
+      ],
+      "properties": {
+        "also_implements_batch_receive_nft": {
+          "description": "true if the contract also implements BacthReceiveNft.  Defaults to false if not specified",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "recipient_code_hash": {
+          "description": "recipient's code hash",
+          "type": "string"
+        }
+      }
+    },
+    "Royalty": {
+      "description": "data for a single royalty",
+      "type": "object",
+      "required": [
+        "rate",
+        "recipient"
+      ],
+      "properties": {
+        "rate": {
+          "description": "royalty rate",
+          "type": "integer",
+          "format": "uint16",
+          "minimum": 0.0
+        },
+        "recipient": {
+          "description": "address to send royalties to",
+          "allOf": [
+            {
+              "$ref": "#/definitions/HumanAddr"
+            }
+          ]
+        }
+      }
+    },
+    "RoyaltyInfo": {
+      "description": "all royalty information",
+      "type": "object",
+      "required": [
+        "decimal_places_in_rates",
+        "royalties"
+      ],
+      "properties": {
+        "decimal_places_in_rates": {
+          "description": "decimal places in royalty rates",
+          "type": "integer",
+          "format": "uint8",
+          "minimum": 0.0
+        },
+        "royalties": {
+          "description": "list of royalties",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Royalty"
+          }
+        }
+      }
+    },
+    "Send": {
+      "description": "send token info used when doing a BatchSendNft",
+      "type": "object",
+      "required": [
+        "contract",
+        "token_ids"
+      ],
+      "properties": {
+        "contract": {
+          "description": "recipient of the sent tokens",
+          "allOf": [
+            {
+              "$ref": "#/definitions/HumanAddr"
+            }
+          ]
+        },
+        "memo": {
+          "description": "optional memo for the tx",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "msg": {
+          "description": "optional message to send with the (Batch)RecieveNft callback",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Binary"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "receiver_info": {
+          "description": "optional code hash and BatchReceiveNft implementation status of the recipient contract",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/ReceiverInfo"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "token_ids": {
+          "description": "tokens being sent",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "Trait": {
+      "description": "attribute trait",
+      "type": "object",
+      "required": [
+        "value"
+      ],
+      "properties": {
+        "display_type": {
+          "description": "indicates how a trait should be displayed",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "max_value": {
+          "description": "optional max value for numerical traits",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "trait_type": {
+          "description": "name of the trait",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "value": {
+          "description": "trait value",
+          "type": "string"
+        }
+      }
+    },
+    "Transfer": {
+      "description": "token transfer info used when doing a BatchTransferNft",
+      "type": "object",
+      "required": [
+        "recipient",
+        "token_ids"
+      ],
+      "properties": {
+        "memo": {
+          "description": "optional memo for the tx",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "recipient": {
+          "description": "recipient of the transferred tokens",
+          "allOf": [
+            {
+              "$ref": "#/definitions/HumanAddr"
+            }
+          ]
+        },
+        "token_ids": {
+          "description": "tokens being transferred",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "Uint128": {
+      "type": "string"
+    }
+  }
+}
