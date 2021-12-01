@@ -16,9 +16,9 @@ use crate::msg::{Tx, TxAction};
 
 use crate::token::Trait;
 
-/// prefix for the storage of SSCRT address
+/// prefix for the storage of snip20 address
 pub const SNIP_ADDRESS_KEY: &[u8] = b"sscrt";
-/// Storage for callback hash of snip contract
+/// Storage for storing the hash of the snip20 contract
 pub const CALLBACK_KEY: &[u8] = b"callback";
 /// Storage key for preloaded tokens
 pub const PRELOAD_KEY: &[u8] = b"preload";

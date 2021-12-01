@@ -515,11 +515,11 @@ pub fn pre_load<S: Storage, A: Api, Q: Querier>(
         ));
     }
 
-    let mut id: u64 = load(&deps.storage, COUNT_KEY)?;
-    let token_key_list: Option<Vec<u64>> = may_load(&deps.storage, PRELOAD_KEY)?;
+    let mut id: u16 = load(&deps.storage, COUNT_KEY)?;
+    let token_key_list: Option<Vec<u16>> = may_load(&deps.storage, PRELOAD_KEY)?;
 
     if token_key_list == None {
-        let mut new_key_list: Vec<u64> = vec![];
+        let mut new_key_list: Vec<u16> = vec![];
 
         for data in new_data.iter() {
         
@@ -533,7 +533,7 @@ pub fn pre_load<S: Storage, A: Api, Q: Querier>(
         save(&mut deps.storage, COUNT_KEY, &id)?;
     }
     else{
-        let mut new_key_list: Vec<u64> = token_key_list.unwrap();
+        let mut new_key_list: Vec<u16> = token_key_list.unwrap();
 
         for data in new_data.iter() {
         
@@ -640,7 +640,7 @@ pub fn mint<S: Storage, A: Api, Q: Querier>(
 
 
     // Pull random token data for minting then remove from data pool
-    let mut token_key_list: Vec<u64> = load(&deps.storage, PRELOAD_KEY)?;
+    let mut token_key_list: Vec<u16> = load(&deps.storage, PRELOAD_KEY)?;
 
     if token_key_list.len() == 0 {
         return Err(StdError::generic_err(
