@@ -17,9 +17,9 @@ use crate::msg::{Tx, TxAction};
 use crate::token::Trait;
 
 /// prefix for the storage of snip20 address
-pub const SNIP_ADDRESS_KEY: &[u8] = b"sscrt";
+pub const SNIP20_ADDRESS_KEY: &[u8] = b"sscrt";
 /// Storage for storing the hash of the snip20 contract
-pub const CALLBACK_KEY: &[u8] = b"callback";
+pub const SNIP20_HASH_KEY: &[u8] = b"callback";
 /// Storage key for preloaded tokens
 pub const PRELOAD_KEY: &[u8] = b"preload";
 /// Fund distribution for initial mint

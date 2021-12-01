@@ -31,7 +31,7 @@ use crate::state::{
     CONFIG_KEY, CREATOR_KEY, DEFAULT_ROYALTY_KEY, MINTERS_KEY, MY_ADDRESS_KEY,
     PREFIX_ALL_PERMISSIONS, PREFIX_AUTHLIST, PREFIX_INFOS, PREFIX_MAP_TO_ID, PREFIX_MAP_TO_INDEX,
     PREFIX_MINT_RUN, PREFIX_MINT_RUN_NUM, PREFIX_OWNER_PRIV, PREFIX_PRIV_META, PREFIX_PUB_META,
-    PREFIX_RECEIVERS, PREFIX_REVOKED_PERMITS, PREFIX_ROYALTY_INFO, PREFIX_VIEW_KEY, PRNG_SEED_KEY, SNIP_ADDRESS_KEY, CALLBACK_KEY, PRELOAD_KEY, 
+    PREFIX_RECEIVERS, PREFIX_REVOKED_PERMITS, PREFIX_ROYALTY_INFO, PREFIX_VIEW_KEY, PRNG_SEED_KEY, SNIP20_ADDRESS_KEY, SNIP20_HASH_KEY, PRELOAD_KEY, 
     DEFAULT_MINT_FUNDS_DISTRIBUTION_KEY
 };
 use crate::token::{Metadata, Token, Extension};
@@ -104,13 +104,13 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
     };
 
 
-    let callback_hash: String = msg.callback;
-    let snip_address: HumanAddr = msg.snip_address;
+    let snip20_hash: String = msg.callback;
+    let snip20_address: HumanAddr = msg.snip_address;
     let count: u64 = 0;
 
     let minters = vec![admin_raw];
-    save(&mut deps.storage, CALLBACK_KEY, &callback_hash)?;
-    save(&mut deps.storage, SNIP_ADDRESS_KEY, &snip_address)?;
+    save(&mut deps.storage, SNIP20_HASH_KEY, &snip20_hash)?;
+    save(&mut deps.storage, SNIP20_ADDRESS_KEY, &snip20_address)?;
     save(&mut deps.storage, CONFIG_KEY, &config)?;
     save(&mut deps.storage, MINTERS_KEY, &minters)?;
     save(&mut deps.storage, PRNG_SEED_KEY, &prng_seed)?;
@@ -158,8 +158,8 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
                 env.contract_code_hash,
                 None,
                 BLOCK_SIZE,
-                callback_hash,
-                snip_address
+                snip20_hash,
+                snip20_address
             )?
         ],
         log: vec![],
@@ -464,9 +464,9 @@ pub fn receive<S: Storage, A: Api, Q: Querier>(
     amount: Uint128,
     msg: Option<Binary>,
 ) -> HandleResult {
-    let snip_address: HumanAddr = load(&deps.storage, SNIP_ADDRESS_KEY)?;
+    let snip20_address: HumanAddr = load(&deps.storage, SNIP20_ADDRESS_KEY)?;
 
-    if env.message.sender != snip_address {
+    if env.message.sender != snip20_address {
         return Err(StdError::generic_err(
             "Address is not correct snip contract",
         ));
@@ -608,14 +608,14 @@ pub fn mint<S: Storage, A: Api, Q: Querier>(
 
 
     let sender_raw = deps.api.canonical_address(&env.message.sender)?;  
-    let snip_address: HumanAddr = load(&deps.storage, SNIP_ADDRESS_KEY)?;
+    let snip20_address: HumanAddr = load(&deps.storage, SNIP20_ADDRESS_KEY)?;
  
     //Payment distribution
     let mut msg_list: Vec<CosmosMsg> = vec![];
     let royalty_list = may_load::<StoredRoyaltyInfo, _>(&deps.storage, DEFAULT_MINT_FUNDS_DISTRIBUTION_KEY)?.unwrap();
  
     // Contract callback hash
-    let callback_code_hash: String = load(&deps.storage, &CALLBACK_KEY)?;
+    let callback_code_hash: String = load(&deps.storage, &SNIP20_HASH_KEY)?;
     let padding = None;
     let block_size = 256;
  
@@ -630,7 +630,7 @@ pub fn mint<S: Storage, A: Api, Q: Querier>(
             padding.clone(),
             block_size.clone(),
             callback_code_hash.clone(),
-            snip_address.clone(),
+            snip20_address.clone(),
         )?;
         msg_list.push(cosmos_msg);
     }
