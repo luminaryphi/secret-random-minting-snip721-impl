@@ -34,10 +34,10 @@ pub struct InitMsg {
     /// contract
     pub post_init_callback: Option<PostInitCallback>,
 
-    /// Stores callback hash for snip contract
-    pub callback: String,
-    /// Stores sscrt address
-    pub snip_address: HumanAddr,
+    /// Stores callback hash for snip20 contract
+    pub snip20_hash: String,
+    /// Stores snip20 token contract address
+    pub snip20_address: HumanAddr,
 
     /// The list of addreses to divide up on initial mint
     pub mint_funds_distribution_info: Option<RoyaltyInfo>

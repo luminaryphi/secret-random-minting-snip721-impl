@@ -104,8 +104,8 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
     };
 
 
-    let snip20_hash: String = msg.callback;
-    let snip20_address: HumanAddr = msg.snip_address;
+    let snip20_hash: String = msg.snip20_hash;
+    let snip20_address: HumanAddr = msg.snip20_address;
     let count: u64 = 0;
 
     let minters = vec![admin_raw];
