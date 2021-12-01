@@ -7,7 +7,7 @@
     "callback",
     "entropy",
     "name",
-    "sscrt_address",
+    "snip_address",
     "symbol"
   ],
   "properties": {
@@ -23,7 +23,7 @@
       ]
     },
     "callback": {
-      "description": "Stores callback hash",
+      "description": "Stores callback hash for snip contract",
       "type": "string"
     },
     "config": {
@@ -78,7 +78,7 @@
         }
       ]
     },
-    "sscrt_address": {
+    "snip_address": {
       "description": "Stores sscrt address",
       "allOf": [
         {

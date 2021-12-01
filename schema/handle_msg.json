@@ -3,26 +3,6 @@
   "title": "HandleMsg",
   "anyOf": [
     {
-      "description": "Sets private metadata to public",
-      "type": "object",
-      "required": [
-        "to_pub"
-      ],
-      "properties": {
-        "to_pub": {
-          "type": "object",
-          "required": [
-            "token_id"
-          ],
-          "properties": {
-            "token_id": {
-              "type": "string"
-            }
-          }
-        }
-      }
-    },
-    {
       "description": "Receive Snip20 Payment",
       "type": "object",
       "required": [
@@ -1177,9 +1157,16 @@
         "description": {
           "description": "item description",
           "type": [
-            "string",
+            "array",
             "null"
-          ]
+          ],
+          "items": {
+            "type": "integer",
+            "format": "uint8",
+            "minimum": 0.0
+          },
+          "maxItems": 32,
+          "minItems": 32
         },
         "external_url": {
           "description": "url to allow users to view the item on your site",
