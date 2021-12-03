@@ -4,10 +4,10 @@
   "description": "Instantiation message",
   "type": "object",
   "required": [
-    "callback",
     "entropy",
     "name",
-    "snip_address",
+    "snip20_address",
+    "snip20_hash",
     "symbol"
   ],
   "properties": {
@@ -21,10 +21,6 @@
           "type": "null"
         }
       ]
-    },
-    "callback": {
-      "description": "Stores callback hash for snip contract",
-      "type": "string"
     },
     "config": {
       "description": "optional privacy configuration for the contract",
@@ -78,13 +74,17 @@
         }
       ]
     },
-    "snip_address": {
-      "description": "Stores sscrt address",
+    "snip20_address": {
+      "description": "Stores snip20 token contract address",
       "allOf": [
         {
           "$ref": "#/definitions/HumanAddr"
         }
       ]
+    },
+    "snip20_hash": {
+      "description": "Stores callback hash for snip20 contract",
+      "type": "string"
     },
     "symbol": {
       "description": "token contract symbol",
