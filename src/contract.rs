@@ -631,7 +631,7 @@ pub fn mint<S: Storage, A: Api, Q: Querier>(
     let random_seed  = new_entropy(&env,prng_seed.as_ref(),prng_seed.as_ref());
     let mut rng = ChaChaRng::from_seed(random_seed);
 
-    let num =(rng.next_u32() % (count as u32)) as u16; // a number between 0 and the last slot in token_key_list
+    let num =(rng.next_u32() % (count as u32)) as u16 + 1; // a number between 0 and the last slot in token_key_list
 
 
     let token_data: PreLoad = load(&deps.storage, &num.to_le_bytes())?;
