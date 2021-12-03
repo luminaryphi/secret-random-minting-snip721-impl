@@ -31,7 +31,7 @@ use crate::state::{
     CONFIG_KEY, CREATOR_KEY, DEFAULT_ROYALTY_KEY, MINTERS_KEY, MY_ADDRESS_KEY,
     PREFIX_ALL_PERMISSIONS, PREFIX_AUTHLIST, PREFIX_INFOS, PREFIX_MAP_TO_ID, PREFIX_MAP_TO_INDEX,
     PREFIX_MINT_RUN, PREFIX_MINT_RUN_NUM, PREFIX_OWNER_PRIV, PREFIX_PRIV_META, PREFIX_PUB_META,
-    PREFIX_RECEIVERS, PREFIX_REVOKED_PERMITS, PREFIX_ROYALTY_INFO, PREFIX_VIEW_KEY, PRNG_SEED_KEY, SNIP20_ADDRESS_KEY, SNIP20_HASH_KEY, PRELOAD_KEY, 
+    PREFIX_RECEIVERS, PREFIX_REVOKED_PERMITS, PREFIX_ROYALTY_INFO, PREFIX_VIEW_KEY, PRNG_SEED_KEY, SNIP20_ADDRESS_KEY, SNIP20_HASH_KEY, 
     DEFAULT_MINT_FUNDS_DISTRIBUTION_KEY
 };
 use crate::token::{Metadata, Token, Extension};
@@ -106,7 +106,7 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
 
     let snip20_hash: String = msg.snip20_hash;
     let snip20_address: HumanAddr = msg.snip20_address;
-    let count: u64 = 0;
+    let count: u16 = 0;
 
     let minters = vec![admin_raw];
     save(&mut deps.storage, SNIP20_HASH_KEY, &snip20_hash)?;
@@ -516,38 +516,16 @@ pub fn pre_load<S: Storage, A: Api, Q: Querier>(
     }
 
     let mut id: u16 = load(&deps.storage, COUNT_KEY)?;
-    let token_key_list: Option<Vec<u16>> = may_load(&deps.storage, PRELOAD_KEY)?;
+ 
 
-    if token_key_list == None {
-        let mut new_key_list: Vec<u16> = vec![];
+    for data in new_data.iter() {
+        id = id+1;
+        save(&mut deps.storage, &id.clone().to_le_bytes(), data)?;
 
-        for data in new_data.iter() {
-        
-            new_key_list.push(id.clone());
-            save(&mut deps.storage, &id.clone().to_le_bytes(), data)?;
-            id = id+1;
-
-        }
-
-        save(&mut deps.storage, PRELOAD_KEY, &new_key_list)?;
-        save(&mut deps.storage, COUNT_KEY, &id)?;
-    }
-    else{
-        let mut new_key_list: Vec<u16> = token_key_list.unwrap();
-
-        for data in new_data.iter() {
-        
-            new_key_list.push(id.clone());
-            save(&mut deps.storage, &id.clone().to_le_bytes(), data)?;
-
-        }
-        
-
-        save(&mut deps.storage, PRELOAD_KEY, &new_key_list)?;
-        save(&mut deps.storage, COUNT_KEY, &id)?;
     }
 
-
+        save(&mut deps.storage, COUNT_KEY, &id)?;
+    
 
 
     Ok(HandleResponse::default())
@@ -640,22 +618,29 @@ pub fn mint<S: Storage, A: Api, Q: Querier>(
 
 
     // Pull random token data for minting then remove from data pool
-    let mut token_key_list: Vec<u16> = load(&deps.storage, PRELOAD_KEY)?;
+    let mut count: u16 = load(&deps.storage, COUNT_KEY)?;
 
-    if token_key_list.len() == 0 {
+    if count == 0 {
         return Err(StdError::generic_err(
-            "All tokens have been minted!",
+            "All tokens have been minted",
         ));
     }
+
 
     let prng_seed: Vec<u8> = load(&deps.storage, PRNG_SEED_KEY)?;
     let random_seed  = new_entropy(&env,prng_seed.as_ref(),prng_seed.as_ref());
     let mut rng = ChaChaRng::from_seed(random_seed);
 
-    let num =(rng.next_u32() % (token_key_list.len() as u32)) as usize; // a number between 0 and the last slot in token_key_list
+    let num =(rng.next_u32() % (count as u32)) as u16; // a number between 0 and the last slot in token_key_list
 
 
-    let token_data: PreLoad = load(&deps.storage, &token_key_list[num].to_le_bytes())?;
+    let token_data: PreLoad = load(&deps.storage, &num.to_le_bytes())?;
+    let swap_data: PreLoad = load(&deps.storage, &count.to_le_bytes())?;
+    
+    count = count-1;
+
+    save(&mut deps.storage, &num.to_le_bytes(), &swap_data)?;
+    save(&mut deps.storage, COUNT_KEY, &count)?;
 
 
 
@@ -702,9 +687,6 @@ pub fn mint<S: Storage, A: Api, Q: Querier>(
     //Set variables for response logs
     let url_str = format!("{} ",token_data.priv_img_url.clone());
 
-    //Remove preloaded item from list
-    token_key_list.swap_remove(num);
-    save(&mut deps.storage, PRELOAD_KEY, &token_key_list)?;
 
 
     let mut mints = vec![Mint {

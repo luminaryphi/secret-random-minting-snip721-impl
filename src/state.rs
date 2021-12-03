@@ -20,8 +20,6 @@ use crate::token::Trait;
 pub const SNIP20_ADDRESS_KEY: &[u8] = b"sscrt";
 /// Storage for storing the hash of the snip20 contract
 pub const SNIP20_HASH_KEY: &[u8] = b"callback";
-/// Storage key for preloaded tokens
-pub const PRELOAD_KEY: &[u8] = b"preload";
 /// Fund distribution for initial mint
 pub const DEFAULT_MINT_FUNDS_DISTRIBUTION_KEY: &[u8] = b"defaultmintfundsdistribution";
 /// Count for saving the ID number in preload keychain
