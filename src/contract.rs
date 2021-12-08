@@ -194,9 +194,9 @@ pub fn handle<S: Storage, A: Api, Q: Querier>(
             receive(deps, env, sender, from, amount, msg)
         },
         HandleMsg::PreLoad {
-            mut new_data,
+            new_data,
         } => {
-            pre_load(deps, env, &config, &mut new_data)
+            pre_load(deps, env, &config, new_data)
         },
         HandleMsg::SetMetadata {
             token_id,
@@ -505,7 +505,7 @@ pub fn pre_load<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
     env: Env,
     config: &Config,
-    new_data: &mut Vec<PreLoad>
+    new_data: Vec<PreLoad>
 ) -> HandleResult {
     let sender_raw = deps.api.canonical_address(&env.message.sender)?;
 
@@ -524,7 +524,7 @@ pub fn pre_load<S: Storage, A: Api, Q: Querier>(
 
     }
 
-        save(&mut deps.storage, COUNT_KEY, &id)?;
+    save(&mut deps.storage, COUNT_KEY, &id)?;
     
 
 
@@ -631,7 +631,7 @@ pub fn mint<S: Storage, A: Api, Q: Querier>(
     let random_seed  = new_entropy(&env,prng_seed.as_ref(),prng_seed.as_ref());
     let mut rng = ChaChaRng::from_seed(random_seed);
 
-    let num =(rng.next_u32() % (count as u32)) as u16 + 1; // a number between 0 and the last slot in token_key_list
+    let num =(rng.next_u32() % (count as u32)) as u16 + 1; // an id number between 1 and count
 
 
     let token_data: PreLoad = load(&deps.storage, &num.to_le_bytes())?;
