@@ -32,7 +32,7 @@ use crate::state::{
     PREFIX_ALL_PERMISSIONS, PREFIX_AUTHLIST, PREFIX_INFOS, PREFIX_MAP_TO_ID, PREFIX_MAP_TO_INDEX,
     PREFIX_MINT_RUN, PREFIX_MINT_RUN_NUM, PREFIX_OWNER_PRIV, PREFIX_PRIV_META, PREFIX_PUB_META,
     PREFIX_RECEIVERS, PREFIX_REVOKED_PERMITS, PREFIX_ROYALTY_INFO, PREFIX_VIEW_KEY, PRNG_SEED_KEY, SNIP20_ADDRESS_KEY, SNIP20_HASH_KEY, 
-    DEFAULT_MINT_FUNDS_DISTRIBUTION_KEY
+    DEFAULT_MINT_FUNDS_DISTRIBUTION_KEY, WHITELIST_COUNT_KEY, WHITELIST_ACTIVE_KEY, PREFIX_WHITELIST,
 };
 use crate::token::{Metadata, Token, Extension};
 use crate::viewing_key::{ViewingKey, VIEWING_KEY_SIZE};
@@ -115,6 +115,7 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
     save(&mut deps.storage, MINTERS_KEY, &minters)?;
     save(&mut deps.storage, PRNG_SEED_KEY, &prng_seed)?;
     save(&mut deps.storage, COUNT_KEY, &count)?;
+    save(&mut deps.storage, WHITELIST_ACTIVE_KEY, &false)?;
 
     // TODO remove this after BlockInfo becomes available to queries
     save(&mut deps.storage, BLOCK_KEY, &env.block)?;
@@ -197,6 +198,15 @@ pub fn handle<S: Storage, A: Api, Q: Querier>(
             new_data,
         } => {
             pre_load(deps, env, &config, new_data)
+        },
+        HandleMsg::LoadWhitelist {
+            whitelist,
+        } => {
+            load_whitelist(deps, env, &config, whitelist)
+        },
+        HandleMsg::DeactivateWhitelist {   
+        } => {
+            deactivate_whitelist(deps, env, &config)
         },
         HandleMsg::SetMetadata {
             token_id,
@@ -534,6 +544,73 @@ pub fn pre_load<S: Storage, A: Api, Q: Querier>(
 }
 
 
+
+/// Lets Admin load whitelist
+pub fn load_whitelist<S: Storage, A: Api, Q: Querier>(
+    deps: &mut Extern<S, A, Q>,
+    env: Env,
+    config: &Config,
+    whitelist: Vec<HumanAddr>
+) -> HandleResult {
+    let sender_raw = deps.api.canonical_address(&env.message.sender)?;
+
+    if config.admin != sender_raw {
+        return Err(StdError::generic_err(
+            "This function is only usable by the Admin",
+        ));
+    }
+
+    let mut whitecount: u8 = 0;
+    let mut white_store = PrefixedStorage::new(PREFIX_WHITELIST, &mut deps.storage);
+
+
+    for hum_addr in whitelist.iter() {
+        let raw_addr = deps.api.canonical_address(&hum_addr)?;
+
+        // Saves FALSE to show addr has not minted
+        save(&mut white_store, &raw_addr.as_slice(), &false)?;
+
+
+        whitecount = whitecount + 1;
+
+    }
+
+
+    // Saves whitelist and marks as being active
+    save(&mut deps.storage, WHITELIST_ACTIVE_KEY, &true)?;
+    save(&mut deps.storage, WHITELIST_COUNT_KEY, &whitecount)?;
+    
+
+
+    Ok(HandleResponse::default())
+}
+
+
+/// Lets Admin deactivate whitelist
+pub fn deactivate_whitelist<S: Storage, A: Api, Q: Querier>(
+    deps: &mut Extern<S, A, Q>,
+    env: Env,
+    config: &Config,
+) -> HandleResult {
+    let sender_raw = deps.api.canonical_address(&env.message.sender)?;
+
+    if config.admin != sender_raw {
+        return Err(StdError::generic_err(
+            "This function is only usable by the Admin",
+        ));
+    }
+
+    save(&mut deps.storage, WHITELIST_ACTIVE_KEY, &false)?;
+    
+
+
+    Ok(HandleResponse::default())
+}
+
+
+
+
+
 pub fn new_entropy(env: &Env, seed: &[u8], entropy: &[u8])-> [u8;32]{
     // 16 here represents the lengths in bytes of the block height and time.
     let entropy_len = 16 + env.message.sender.len() + entropy.len();
@@ -587,6 +664,49 @@ pub fn mint<S: Storage, A: Api, Q: Querier>(
 
     let sender_raw = deps.api.canonical_address(&env.message.sender)?;  
     let snip20_address: HumanAddr = load(&deps.storage, SNIP20_ADDRESS_KEY)?;
+
+
+
+    // Checks how many tokens are left
+    let mut count: u16 = load(&deps.storage, COUNT_KEY)?;
+
+    if count == 0 {
+        return Err(StdError::generic_err(
+            "All tokens have been minted",
+        ));
+    }
+
+
+
+
+    //Whitelist management
+    //Checks if minter has a whitelist reservation, and removes their reservation after minting
+
+    if load(&deps.storage, WHITELIST_ACTIVE_KEY)?  {
+        let whitecount: u8 = load(&deps.storage, WHITELIST_COUNT_KEY)?;
+        let mut white_store = PrefixedStorage::new(PREFIX_WHITELIST, &mut deps.storage);
+
+        let list_check: Option<bool> = may_load(&white_store, deps.api.canonical_address(&owner.clone().unwrap())?.as_slice())?;
+
+        // If addr is on list and hasn't minted
+        if list_check != None && list_check.unwrap() == false {
+            save(&mut white_store, &deps.api.canonical_address(&owner.clone().unwrap())?.as_slice(), &true)?;
+            save(&mut deps.storage, WHITELIST_COUNT_KEY, &(whitecount-1))?;
+            
+        }
+
+        else if whitecount as u16 >= count {
+            return Err(StdError::generic_err(
+                "Remaining tokens are reserved",
+            ));
+        }     
+
+    }
+
+  
+
+
+
  
     //Payment distribution
     let mut msg_list: Vec<CosmosMsg> = vec![];
@@ -618,15 +738,6 @@ pub fn mint<S: Storage, A: Api, Q: Querier>(
 
 
     // Pull random token data for minting then remove from data pool
-    let mut count: u16 = load(&deps.storage, COUNT_KEY)?;
-
-    if count == 0 {
-        return Err(StdError::generic_err(
-            "All tokens have been minted",
-        ));
-    }
-
-
     let prng_seed: Vec<u8> = load(&deps.storage, PRNG_SEED_KEY)?;
     let random_seed  = new_entropy(&env,prng_seed.as_ref(),prng_seed.as_ref());
     let mut rng = ChaChaRng::from_seed(random_seed);

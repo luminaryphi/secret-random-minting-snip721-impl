@@ -24,6 +24,12 @@ pub const SNIP20_HASH_KEY: &[u8] = b"callback";
 pub const DEFAULT_MINT_FUNDS_DISTRIBUTION_KEY: &[u8] = b"defaultmintfundsdistribution";
 /// Count for saving the ID number in preload keychain
 pub const COUNT_KEY: &[u8] = b"count";
+/// Key for the whitelist
+pub const WHITELIST_COUNT_KEY: &[u8] = b"whitelistcount";
+/// Key for bool if whitelist is active or not
+pub const WHITELIST_ACTIVE_KEY: &[u8] = b"whitelistactive";
+/// Whitelist prefix
+pub const PREFIX_WHITELIST: &[u8] = b"whitelistprefix";
 
 /// storage key for config
 pub const CONFIG_KEY: &[u8] = b"config";

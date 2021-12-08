@@ -14,6 +14,8 @@ mod tests {
         PREFIX_INFOS, PREFIX_MAP_TO_ID, PREFIX_MAP_TO_INDEX, PREFIX_OWNER_PRIV, PREFIX_PRIV_META,
         PREFIX_PUB_META, PREFIX_RECEIVERS, PREFIX_VIEW_KEY,
     };
+
+    use crate::royalties::{Royalty, RoyaltyInfo};
     use crate::token::{Extension, Metadata, Token};
     use crate::viewing_key::{ViewingKey, VIEWING_KEY_SIZE};
     use cosmwasm_std::testing::*;
@@ -43,6 +45,17 @@ mod tests {
             royalty_info: None,
             config: None,
             post_init_callback: None,
+
+            snip20_hash: "bing bong".to_string(),
+            snip20_address: HumanAddr("bong bing".to_string()),
+            mint_funds_distribution_info: Some(RoyaltyInfo{
+                decimal_places_in_rates: 2,
+                royalties: vec![Royalty{
+                    recipient: HumanAddr("ding dong".to_string()),
+                    rate: 100,
+                }],
+
+            })
         };
 
         (init(&mut deps, env, init_msg), deps)
@@ -91,6 +104,17 @@ mod tests {
             royalty_info: None,
             config: Some(init_config),
             post_init_callback: None,
+            snip20_hash: "bing bong".to_string(),
+            snip20_address: HumanAddr("bong bing".to_string()),
+            mint_funds_distribution_info: Some(RoyaltyInfo{
+                decimal_places_in_rates: 2,
+                royalties: vec![Royalty{
+                    recipient: HumanAddr("ding dong".to_string()),
+                    rate: 100,
+                }],
+
+            })
+
         };
 
         (init(&mut deps, env, init_msg), deps)
@@ -188,6 +212,16 @@ mod tests {
             royalty_info: None,
             config: None,
             post_init_callback,
+            snip20_hash: "bing bong".to_string(),
+            snip20_address: HumanAddr("bong bing".to_string()),
+            mint_funds_distribution_info: Some(RoyaltyInfo{
+                decimal_places_in_rates: 2,
+                royalties: vec![Royalty{
+                    recipient: HumanAddr("ding dong".to_string()),
+                    rate: 100,
+                }],
+
+            })
         };
 
         let init_response = init(&mut deps, env, init_msg).unwrap();

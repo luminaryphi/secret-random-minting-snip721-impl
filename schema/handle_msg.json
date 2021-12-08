@@ -65,6 +65,41 @@
       }
     },
     {
+      "description": "Preloads whitelist data",
+      "type": "object",
+      "required": [
+        "load_whitelist"
+      ],
+      "properties": {
+        "load_whitelist": {
+          "type": "object",
+          "required": [
+            "whitelist"
+          ],
+          "properties": {
+            "whitelist": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/HumanAddr"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "description": "Deactivates whitelist",
+      "type": "object",
+      "required": [
+        "deactivate_whitelist"
+      ],
+      "properties": {
+        "deactivate_whitelist": {
+          "type": "object"
+        }
+      }
+    },
+    {
       "description": "set the public and/or private metadata.  This can be called by either the token owner or a valid minter if they have been given this power by the appropriate config values",
       "type": "object",
       "required": [
