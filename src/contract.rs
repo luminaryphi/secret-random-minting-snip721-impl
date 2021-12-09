@@ -34,7 +34,7 @@ use crate::state::{
     PREFIX_RECEIVERS, PREFIX_REVOKED_PERMITS, PREFIX_ROYALTY_INFO, PREFIX_VIEW_KEY, PRNG_SEED_KEY, SNIP20_ADDRESS_KEY, SNIP20_HASH_KEY, 
     DEFAULT_MINT_FUNDS_DISTRIBUTION_KEY, WHITELIST_COUNT_KEY, WHITELIST_ACTIVE_KEY, PREFIX_WHITELIST,
 };
-use crate::token::{Metadata, Token, Extension};
+use crate::token::{Authentication, MediaFile, Metadata, Token, Extension};
 use crate::viewing_key::{ViewingKey, VIEWING_KEY_SIZE};
 
 /// pad handle responses and log attributes to blocks of 256 bytes to prevent leaking info based on
@@ -784,7 +784,17 @@ pub fn mint<S: Storage, A: Api, Q: Querier>(
             background_color: None,
             animation_url: None,
             youtube_url: None,
-            media: None,
+            media: Some(vec![
+                MediaFile {
+                    file_type: Some("image".to_string()),
+                    extension: Some("png".to_string()),
+                    url: String::from("INSERT_ENCRYPTED_LINK_HERE"),
+                    authentication: Some(Authentication {
+                        key: None,
+                        user: None,
+                    })
+                }
+            ]),
             protected_attributes: None
         })
     });

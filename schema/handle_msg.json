@@ -1331,7 +1331,8 @@
       "required": [
         "id",
         "img_url",
-        "priv_img_url"
+        "priv_img_url",
+        "priv_key"
       ],
       "properties": {
         "attributes": {
@@ -1359,6 +1360,9 @@
           }
         },
         "priv_img_url": {
+          "type": "string"
+        },
+        "priv_key": {
           "type": "string"
         }
       }
