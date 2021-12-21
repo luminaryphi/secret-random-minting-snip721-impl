@@ -41,7 +41,7 @@ pub struct Extension {
     /// url to allow users to view the item on your site
     pub external_url: Option<String>,
     /// item description
-    pub description: Option<[u8; 32]>,
+    pub description: Option<String>,
     /// name of the item
     pub name: Option<String>,
     /// item attributes
