@@ -31,6 +31,7 @@ pub const WHITELIST_ACTIVE_KEY: &[u8] = b"whitelistactive";
 /// Whitelist prefix
 pub const PREFIX_WHITELIST: &[u8] = b"whitelistprefix";
 
+
 /// storage key for config
 pub const CONFIG_KEY: &[u8] = b"config";
 /// storage key for the BlockInfo when the last handle was executed
