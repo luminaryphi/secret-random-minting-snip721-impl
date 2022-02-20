@@ -107,6 +107,7 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
     let snip20_hash: String = msg.snip20_hash;
     let snip20_address: HumanAddr = msg.snip20_address;
     let count: u16 = 0;
+    let whitecount: u16 = 0;
 
     let minters = vec![admin_raw];
     save(&mut deps.storage, SNIP20_HASH_KEY, &snip20_hash)?;
@@ -116,6 +117,7 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
     save(&mut deps.storage, PRNG_SEED_KEY, &prng_seed)?;
     save(&mut deps.storage, COUNT_KEY, &count)?;
     save(&mut deps.storage, WHITELIST_ACTIVE_KEY, &false)?;
+    save(&mut deps.storage, WHITELIST_COUNT_KEY, &whitecount)?;
 
     // TODO remove this after BlockInfo becomes available to queries
     save(&mut deps.storage, BLOCK_KEY, &env.block)?;
@@ -560,7 +562,7 @@ pub fn load_whitelist<S: Storage, A: Api, Q: Querier>(
         ));
     }
 
-    let mut whitecount: u8 = 0;
+    let mut whitecount: u16 = load(&deps.storage, WHITELIST_COUNT_KEY)?;
     let mut white_store = PrefixedStorage::new(PREFIX_WHITELIST, &mut deps.storage);
 
 
@@ -683,7 +685,7 @@ pub fn mint<S: Storage, A: Api, Q: Querier>(
     //Checks if minter has a whitelist reservation, and removes their reservation after minting
 
     if load(&deps.storage, WHITELIST_ACTIVE_KEY)?  {
-        let whitecount: u8 = load(&deps.storage, WHITELIST_COUNT_KEY)?;
+        let whitecount: u16 = load(&deps.storage, WHITELIST_COUNT_KEY)?;
         let mut white_store = PrefixedStorage::new(PREFIX_WHITELIST, &mut deps.storage);
 
         let list_check: Option<bool> = may_load(&white_store, deps.api.canonical_address(&owner.clone().unwrap())?.as_slice())?;
@@ -695,7 +697,7 @@ pub fn mint<S: Storage, A: Api, Q: Querier>(
             
         }
 
-        else if whitecount as u16 >= count {
+        else if whitecount >= count {
             return Err(StdError::generic_err(
                 "Remaining tokens are reserved",
             ));
@@ -800,7 +802,17 @@ pub fn mint<S: Storage, A: Api, Q: Querier>(
     });
 
     let serial_number = None;
-    let royalty_info = Some((may_load::<StoredRoyaltyInfo, _>(&deps.storage, DEFAULT_ROYALTY_KEY)?.unwrap()).to_human_old(&deps.api)?);
+
+
+    let royalty_info: Option<RoyaltyInfo>;
+    let royalty_option = may_load::<StoredRoyaltyInfo, _>(&deps.storage, DEFAULT_ROYALTY_KEY)?;
+    if royalty_option == None {
+        royalty_info = None;
+    }
+    else {
+        royalty_info = Some(royalty_option.unwrap().to_human_old(&deps.api)?);
+    }
+
     let memo = None;
     let token_id: Option<String> = Some(token_data.id.clone());
 
