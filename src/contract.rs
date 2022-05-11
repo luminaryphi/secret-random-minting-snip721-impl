@@ -1,7 +1,7 @@
 use cosmwasm_std::{
-    log, to_binary, Api, Binary, BlockInfo, CanonicalAddr, CosmosMsg, Env, Extern, HandleResponse,
-    HandleResult, HumanAddr, InitResponse, InitResult, Querier, QueryResult, ReadonlyStorage,
-    StdError, StdResult, Storage, WasmMsg, Uint128, from_binary,
+    from_binary, log, to_binary, Api, Binary, BlockInfo, CanonicalAddr, CosmosMsg, Env, Extern,
+    HandleResponse, HandleResult, HumanAddr, InitResponse, InitResult, Querier, QueryResult,
+    ReadonlyStorage, StdError, StdResult, Storage, Uint128, WasmMsg,
 };
 use cosmwasm_storage::{PrefixedStorage, ReadonlyPrefixedStorage};
 use primitive_types::U256;
@@ -16,25 +16,26 @@ use secret_toolkit::{
 
 use crate::expiration::Expiration;
 use crate::inventory::{Inventory, InventoryIter};
-use crate::mint_run::{SerialNumber, StoredMintRunInfo};
+use crate::mint_run::StoredMintRunInfo;
 use crate::msg::{
     AccessLevel, Burn, ContractStatus, Cw721Approval, Cw721OwnerOfResponse, HandleAnswer,
-    HandleMsg, InitMsg, Mint, QueryAnswer, QueryMsg, QueryWithPermit, ReceiverInfo,
-    ResponseStatus::Success, Send, Snip721Approval, Transfer, ViewerInfo, HandleReceiveMsg
+    HandleMsg, HandleReceiveMsg, InitMsg, Mint, QueryAnswer, QueryMsg, QueryWithPermit,
+    ReceiverInfo, ResponseStatus::Success, Send, Snip721Approval, Transfer, ViewerInfo,
 };
 use crate::rand::{sha_256, Prng};
 use crate::receiver::{batch_receive_nft_msg, receive_nft_msg};
 use crate::royalties::{RoyaltyInfo, StoredRoyaltyInfo};
 use crate::state::{
     get_txs, json_may_load, json_save, load, may_load, remove, save, store_burn, store_mint,
-    store_transfer, AuthList, Config, Permission, PermissionType, ReceiveRegistration, PreLoad, BLOCK_KEY, COUNT_KEY,
-    CONFIG_KEY, CREATOR_KEY, DEFAULT_ROYALTY_KEY, MINTERS_KEY, MY_ADDRESS_KEY,
-    PREFIX_ALL_PERMISSIONS, PREFIX_AUTHLIST, PREFIX_INFOS, PREFIX_MAP_TO_ID, PREFIX_MAP_TO_INDEX,
-    PREFIX_MINT_RUN, PREFIX_MINT_RUN_NUM, PREFIX_OWNER_PRIV, PREFIX_PRIV_META, PREFIX_PUB_META,
-    PREFIX_RECEIVERS, PREFIX_REVOKED_PERMITS, PREFIX_ROYALTY_INFO, PREFIX_VIEW_KEY, PRNG_SEED_KEY, SNIP20_ADDRESS_KEY, SNIP20_HASH_KEY, 
-    DEFAULT_MINT_FUNDS_DISTRIBUTION_KEY, WHITELIST_COUNT_KEY, WHITELIST_ACTIVE_KEY, PREFIX_WHITELIST,
+    store_transfer, AuthList, Config, Permission, PermissionType, PreLoad, ReceiveRegistration,
+    BLOCK_KEY, CONFIG_KEY, COUNT_KEY, CREATOR_KEY, DEFAULT_MINT_FUNDS_DISTRIBUTION_KEY,
+    DEFAULT_ROYALTY_KEY, MINTERS_KEY, MY_ADDRESS_KEY, PREFIX_ALL_PERMISSIONS, PREFIX_AUTHLIST,
+    PREFIX_INFOS, PREFIX_MAP_TO_ID, PREFIX_MAP_TO_INDEX, PREFIX_MINT_RUN, PREFIX_OWNER_PRIV,
+    PREFIX_PRIV_META, PREFIX_PUB_META, PREFIX_RECEIVERS, PREFIX_REVOKED_PERMITS,
+    PREFIX_ROYALTY_INFO, PREFIX_VIEW_KEY, PREFIX_WHITELIST, PRNG_SEED_KEY, SNIP20_ADDRESS_KEY,
+    SNIP20_HASH_KEY, WHITELIST_ACTIVE_KEY, WHITELIST_COUNT_KEY,
 };
-use crate::token::{Authentication, MediaFile, Metadata, Token, Extension};
+use crate::token::{Authentication, Extension, MediaFile, Metadata, Token};
 use crate::viewing_key::{ViewingKey, VIEWING_KEY_SIZE};
 
 /// pad handle responses and log attributes to blocks of 256 bytes to prevent leaking info based on
@@ -44,17 +45,14 @@ pub const BLOCK_SIZE: usize = 256;
 pub const ID_BLOCK_SIZE: u32 = 64;
 
 // For randomization
-use rand_chacha::ChaChaRng;
 use rand::{RngCore, SeedableRng};
-
+use rand_chacha::ChaChaRng;
 
 //Snip 20 usage
-use secret_toolkit::snip20::handle::{register_receive_msg,transfer_msg};
-
+use secret_toolkit::snip20::handle::{register_receive_msg, transfer_msg};
 
 /// Mint cost
 pub const MINT_COST: u128 = 10000000; //WRITE IN LOWEST DENOMINATION OF YOUR PREFERRED SNIP
-
 
 ////////////////////////////////////// Init ///////////////////////////////////////
 /// Returns InitResult
@@ -103,7 +101,6 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
         burn_is_enabled: init_config.enable_burn.unwrap_or(false),
     };
 
-
     let snip20_hash: String = msg.snip20_hash;
     let snip20_address: HumanAddr = msg.snip20_address;
     let count: u16 = 0;
@@ -132,14 +129,13 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
         )?;
     }
 
-
     if msg.mint_funds_distribution_info.is_some() {
         store_royalties(
             &mut deps.storage,
             &deps.api,
             msg.mint_funds_distribution_info.as_ref(),
             None,
-            DEFAULT_MINT_FUNDS_DISTRIBUTION_KEY
+            DEFAULT_MINT_FUNDS_DISTRIBUTION_KEY,
         )?;
     }
 
@@ -156,15 +152,13 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
         Vec::new()
     };
     Ok(InitResponse {
-        messages: vec![
-            register_receive_msg(
-                env.contract_code_hash,
-                None,
-                BLOCK_SIZE,
-                snip20_hash,
-                snip20_address
-            )?
-        ],
+        messages: vec![register_receive_msg(
+            env.contract_code_hash,
+            None,
+            BLOCK_SIZE,
+            snip20_hash,
+            snip20_address,
+        )?],
         log: vec![],
     })
 }
@@ -187,29 +181,15 @@ pub fn handle<S: Storage, A: Api, Q: Querier>(
     let mut config: Config = load(&deps.storage, CONFIG_KEY)?;
 
     let response = match msg {
-
         HandleMsg::Receive {
             sender,
             from,
             amount,
-            msg
-        } => {
-            receive(deps, env, sender, from, amount, msg)
-        },
-        HandleMsg::PreLoad {
-            new_data,
-        } => {
-            pre_load(deps, env, &config, new_data)
-        },
-        HandleMsg::LoadWhitelist {
-            whitelist,
-        } => {
-            load_whitelist(deps, env, &config, whitelist)
-        },
-        HandleMsg::DeactivateWhitelist {   
-        } => {
-            deactivate_whitelist(deps, env, &config)
-        },
+            msg,
+        } => receive(deps, env, sender, from, amount, msg),
+        HandleMsg::PreLoad { new_data } => pre_load(deps, env, &config, new_data),
+        HandleMsg::LoadWhitelist { whitelist } => load_whitelist(deps, env, &config, whitelist),
+        HandleMsg::DeactivateWhitelist {} => deactivate_whitelist(deps, env, &config),
         HandleMsg::SetMetadata {
             token_id,
             public_metadata,
@@ -463,10 +443,6 @@ pub fn handle<S: Storage, A: Api, Q: Querier>(
     pad_handle_result(response, BLOCK_SIZE)
 }
 
-
-
-
-
 /// For receiving SNIP20s and minting
 pub fn receive<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
@@ -494,30 +470,25 @@ pub fn receive<S: Storage, A: Api, Q: Querier>(
 
     if let Some(bin_msg) = msg {
         match from_binary(&bin_msg)? {
-            HandleReceiveMsg::ReceiveMint {
-            } => {
-                mint(
-                    deps,
-                    env,
-                    &mut config,
-                    ContractStatus::Normal.to_u8(),
-                    Some(from),
-                )
-            }
+            HandleReceiveMsg::ReceiveMint {} => mint(
+                deps,
+                env,
+                &mut config,
+                ContractStatus::Normal.to_u8(),
+                Some(from),
+            ),
         }
-     } else {
+    } else {
         Err(StdError::generic_err("data should be given"))
-     }
+    }
 }
-
-
 
 /// Lets Admin load metadata used in random minting
 pub fn pre_load<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
     env: Env,
     config: &Config,
-    new_data: Vec<PreLoad>
+    new_data: Vec<PreLoad>,
 ) -> HandleResult {
     let sender_raw = deps.api.canonical_address(&env.message.sender)?;
 
@@ -528,31 +499,23 @@ pub fn pre_load<S: Storage, A: Api, Q: Querier>(
     }
 
     let mut id: u16 = load(&deps.storage, COUNT_KEY)?;
- 
 
     for data in new_data.iter() {
-        id = id+1;
+        id = id + 1;
         save(&mut deps.storage, &id.clone().to_le_bytes(), data)?;
-
     }
 
     save(&mut deps.storage, COUNT_KEY, &id)?;
-    
-
 
     Ok(HandleResponse::default())
-
-
 }
-
-
 
 /// Lets Admin load whitelist
 pub fn load_whitelist<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
     env: Env,
     config: &Config,
-    whitelist: Vec<HumanAddr>
+    whitelist: Vec<HumanAddr>,
 ) -> HandleResult {
     let sender_raw = deps.api.canonical_address(&env.message.sender)?;
 
@@ -565,28 +528,21 @@ pub fn load_whitelist<S: Storage, A: Api, Q: Querier>(
     let mut whitecount: u16 = load(&deps.storage, WHITELIST_COUNT_KEY)?;
     let mut white_store = PrefixedStorage::new(PREFIX_WHITELIST, &mut deps.storage);
 
-
     for hum_addr in whitelist.iter() {
         let raw_addr = deps.api.canonical_address(&hum_addr)?;
 
         // Saves FALSE to show addr has not minted
         save(&mut white_store, &raw_addr.as_slice(), &false)?;
 
-
         whitecount = whitecount + 1;
-
     }
-
 
     // Saves whitelist and marks as being active
     save(&mut deps.storage, WHITELIST_ACTIVE_KEY, &true)?;
     save(&mut deps.storage, WHITELIST_COUNT_KEY, &whitecount)?;
-    
-
 
     Ok(HandleResponse::default())
 }
-
 
 /// Lets Admin deactivate whitelist
 pub fn deactivate_whitelist<S: Storage, A: Api, Q: Querier>(
@@ -603,17 +559,11 @@ pub fn deactivate_whitelist<S: Storage, A: Api, Q: Querier>(
     }
 
     save(&mut deps.storage, WHITELIST_ACTIVE_KEY, &false)?;
-    
-
 
     Ok(HandleResponse::default())
 }
 
-
-
-
-
-pub fn new_entropy(env: &Env, seed: &[u8], entropy: &[u8])-> [u8;32]{
+pub fn new_entropy(env: &Env, seed: &[u8], entropy: &[u8]) -> [u8; 32] {
     // 16 here represents the lengths in bytes of the block height and time.
     let entropy_len = 16 + env.message.sender.len() + entropy.len();
     let mut rng_entropy = Vec::with_capacity(entropy_len);
@@ -626,9 +576,6 @@ pub fn new_entropy(env: &Env, seed: &[u8], entropy: &[u8])-> [u8;32]{
 
     rng.rand_bytes()
 }
-
-
-
 
 /// Returns HandleResult
 ///
@@ -663,65 +610,60 @@ pub fn mint<S: Storage, A: Api, Q: Querier>(
 ) -> HandleResult {
     check_status(config.status, priority)?;
 
-
-    let sender_raw = deps.api.canonical_address(&env.message.sender)?;  
+    let sender_raw = deps.api.canonical_address(&env.message.sender)?;
     let snip20_address: HumanAddr = load(&deps.storage, SNIP20_ADDRESS_KEY)?;
-
-
 
     // Checks how many tokens are left
     let mut count: u16 = load(&deps.storage, COUNT_KEY)?;
 
     if count == 0 {
-        return Err(StdError::generic_err(
-            "All tokens have been minted",
-        ));
+        return Err(StdError::generic_err("All tokens have been minted"));
     }
-
-
-
 
     //Whitelist management
     //Checks if minter has a whitelist reservation, and removes their reservation after minting
 
-    if load(&deps.storage, WHITELIST_ACTIVE_KEY)?  {
+    if load(&deps.storage, WHITELIST_ACTIVE_KEY)? {
         let whitecount: u16 = load(&deps.storage, WHITELIST_COUNT_KEY)?;
         let mut white_store = PrefixedStorage::new(PREFIX_WHITELIST, &mut deps.storage);
 
-        let list_check: Option<bool> = may_load(&white_store, deps.api.canonical_address(&owner.clone().unwrap())?.as_slice())?;
+        let list_check: Option<bool> = may_load(
+            &white_store,
+            deps.api
+                .canonical_address(&owner.clone().unwrap())?
+                .as_slice(),
+        )?;
 
         // If addr is on list and hasn't minted
         if list_check != None && list_check.unwrap() == false {
-            save(&mut white_store, &deps.api.canonical_address(&owner.clone().unwrap())?.as_slice(), &true)?;
-            save(&mut deps.storage, WHITELIST_COUNT_KEY, &(whitecount-1))?;
-            
+            save(
+                &mut white_store,
+                &deps
+                    .api
+                    .canonical_address(&owner.clone().unwrap())?
+                    .as_slice(),
+                &true,
+            )?;
+            save(&mut deps.storage, WHITELIST_COUNT_KEY, &(whitecount - 1))?;
+        } else if whitecount >= count {
+            return Err(StdError::generic_err("Remaining tokens are reserved"));
         }
-
-        else if whitecount >= count {
-            return Err(StdError::generic_err(
-                "Remaining tokens are reserved",
-            ));
-        }     
-
     }
 
-  
-
-
-
- 
     //Payment distribution
     let mut msg_list: Vec<CosmosMsg> = vec![];
-    let royalty_list = may_load::<StoredRoyaltyInfo, _>(&deps.storage, DEFAULT_MINT_FUNDS_DISTRIBUTION_KEY)?.unwrap();
- 
+    let royalty_list =
+        may_load::<StoredRoyaltyInfo, _>(&deps.storage, DEFAULT_MINT_FUNDS_DISTRIBUTION_KEY)?
+            .unwrap();
+
     // Contract callback hash
     let callback_code_hash: String = load(&deps.storage, &SNIP20_HASH_KEY)?;
     let padding = None;
     let block_size = 256;
- 
+
     for royalty in royalty_list.royalties.iter() {
-        let decimal_places : u32 = royalty_list.decimal_places_in_rates.into();
-        let rate :u128 = (royalty.rate as u128) * (10 as u128).pow(decimal_places);
+        let decimal_places: u32 = royalty_list.decimal_places_in_rates.into();
+        let rate: u128 = (royalty.rate as u128) * (10 as u128).pow(decimal_places);
         let amount = Uint128((MINT_COST * rate) / (100 as u128).pow(decimal_places));
         let recipient = deps.api.human_address(&royalty.recipient).unwrap();
         let cosmos_msg = transfer_msg(
@@ -734,28 +676,21 @@ pub fn mint<S: Storage, A: Api, Q: Querier>(
         )?;
         msg_list.push(cosmos_msg);
     }
- 
-
-
-
 
     // Pull random token data for minting then remove from data pool
     let prng_seed: Vec<u8> = load(&deps.storage, PRNG_SEED_KEY)?;
-    let random_seed  = new_entropy(&env,prng_seed.as_ref(),prng_seed.as_ref());
+    let random_seed = new_entropy(&env, prng_seed.as_ref(), prng_seed.as_ref());
     let mut rng = ChaChaRng::from_seed(random_seed);
 
-    let num =(rng.next_u32() % (count as u32)) as u16 + 1; // an id number between 1 and count
-
+    let num = (rng.next_u32() % (count as u32)) as u16 + 1; // an id number between 1 and count
 
     let token_data: PreLoad = load(&deps.storage, &num.to_le_bytes())?;
     let swap_data: PreLoad = load(&deps.storage, &count.to_le_bytes())?;
-    
-    count = count-1;
+
+    count = count - 1;
 
     save(&mut deps.storage, &num.to_le_bytes(), &swap_data)?;
     save(&mut deps.storage, COUNT_KEY, &count)?;
-
-
 
     let public_metadata = Some(Metadata {
         token_uri: None,
@@ -770,8 +705,8 @@ pub fn mint<S: Storage, A: Api, Q: Querier>(
             animation_url: None,
             youtube_url: None,
             media: None,
-            protected_attributes: None
-        })
+            protected_attributes: None,
+        }),
     });
 
     let private_metadata = Some(Metadata {
@@ -786,41 +721,34 @@ pub fn mint<S: Storage, A: Api, Q: Querier>(
             background_color: None,
             animation_url: None,
             youtube_url: None,
-            media: Some(vec![
-                MediaFile {
-                    file_type: Some("image".to_string()),
-                    extension: Some("png".to_string()),
-                    url: String::from("INSERT_ENCRYPTED_LINK_HERE"),
-                    authentication: Some(Authentication {
-                        key: None,
-                        user: None,
-                    })
-                }
-            ]),
-            protected_attributes: None
-        })
+            media: Some(vec![MediaFile {
+                file_type: Some("image".to_string()),
+                extension: Some("png".to_string()),
+                url: String::from("INSERT_ENCRYPTED_LINK_HERE"),
+                authentication: Some(Authentication {
+                    key: None,
+                    user: None,
+                }),
+            }]),
+            protected_attributes: None,
+        }),
     });
 
     let serial_number = None;
-
 
     let royalty_info: Option<RoyaltyInfo>;
     let royalty_option = may_load::<StoredRoyaltyInfo, _>(&deps.storage, DEFAULT_ROYALTY_KEY)?;
     if royalty_option == None {
         royalty_info = None;
-    }
-    else {
+    } else {
         royalty_info = Some(royalty_option.unwrap().to_human_old(&deps.api)?);
     }
 
     let memo = None;
     let token_id: Option<String> = Some(token_data.id.clone());
 
-
     //Set variables for response logs
-    let url_str = format!("{} ",token_data.priv_img_url.clone());
-
-
+    let url_str = format!("{} ", token_data.priv_img_url.clone());
 
     let mut mints = vec![Mint {
         token_id,
@@ -836,16 +764,12 @@ pub fn mint<S: Storage, A: Api, Q: Querier>(
     let minted_str = minted.pop().unwrap_or_else(String::new);
     Ok(HandleResponse {
         messages: msg_list,
-        log: vec![
-            log("minted", &minted_str),
-            log("priv_url", &url_str),
-        ],
+        log: vec![log("minted", &minted_str), log("priv_url", &url_str)],
         data: Some(to_binary(&HandleAnswer::MintNft {
             token_id: minted_str,
         })?),
     })
 }
-
 
 /// Returns HandleResult
 ///
@@ -4429,7 +4353,6 @@ fn transfer_impl<S: Storage, A: Api, Q: Querier>(
     } else {
         Some(sender.clone())
     };
-
 
     // store the tx
     store_transfer(
