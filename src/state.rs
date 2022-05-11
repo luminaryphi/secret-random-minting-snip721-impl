@@ -1,5 +1,5 @@
-use std::any::type_name;
 use schemars::JsonSchema;
+use std::any::type_name;
 
 use cosmwasm_std::{Api, BlockInfo, CanonicalAddr, ReadonlyStorage, StdError, StdResult, Storage};
 use cosmwasm_storage::{PrefixedStorage, ReadonlyPrefixedStorage};
@@ -30,7 +30,6 @@ pub const WHITELIST_COUNT_KEY: &[u8] = b"whitelistcount";
 pub const WHITELIST_ACTIVE_KEY: &[u8] = b"whitelistactive";
 /// Whitelist prefix
 pub const PREFIX_WHITELIST: &[u8] = b"whitelistprefix";
-
 
 /// storage key for config
 pub const CONFIG_KEY: &[u8] = b"config";
@@ -466,21 +465,16 @@ pub struct ReceiveRegistration {
     pub impl_batch: bool,
 }
 
-
 /// Preloaded data storage for the tokens during init
 #[derive(Serialize, Deserialize, Clone, JsonSchema, PartialEq, Debug)]
-pub struct  PreLoad {
+pub struct PreLoad {
     pub id: String,
     pub img_url: String,
     pub priv_img_url: String,
-    pub attributes : Option<Vec<Trait>>,
+    pub attributes: Option<Vec<Trait>>,
     pub priv_attributes: Option<Vec<Trait>>,
     pub priv_key: String,
 }
-
-
-
-
 
 /// Returns StdResult<()> resulting from saving an item to storage
 ///
