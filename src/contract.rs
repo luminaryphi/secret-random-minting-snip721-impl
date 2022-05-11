@@ -140,25 +140,26 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
     }
 
     // perform the post init callback if needed
-    let messages: Vec<CosmosMsg> = if let Some(callback) = msg.post_init_callback {
-        let execute = WasmMsg::Execute {
-            msg: callback.msg,
-            contract_addr: callback.contract_address,
-            callback_code_hash: callback.code_hash,
-            send: callback.send,
-        };
-        vec![execute.into()]
-    } else {
-        Vec::new()
-    };
+    let mut messages = vec![register_receive_msg(
+        env.contract_code_hash,
+        None,
+        BLOCK_SIZE,
+        snip20_hash,
+        snip20_address,
+    )?];
+    if let Some(callback) = msg.post_init_callback {
+        messages.push(
+            WasmMsg::Execute {
+                msg: callback.msg,
+                contract_addr: callback.contract_address,
+                callback_code_hash: callback.code_hash,
+                send: callback.send,
+            }
+            .into(),
+        );
+    }
     Ok(InitResponse {
-        messages: vec![register_receive_msg(
-            env.contract_code_hash,
-            None,
-            BLOCK_SIZE,
-            snip20_hash,
-            snip20_address,
-        )?],
+        messages,
         log: vec![],
     })
 }
